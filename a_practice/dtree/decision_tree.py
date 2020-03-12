@@ -14,14 +14,14 @@ def create_data_set():
         返回数据集和对应的label标签
     """
     # 特征分别为：长相、学历、幽默、收入、是否喜欢
-    data_set = [[1, 1, 0, 1, 'yes'],
-               [1, 1, 1, 0, 'yes'],
-               [1, 0, 1, 0, 'no'],
-               [0, 1, 1, 1, 'no'],
-               [0, 1, 0, 1, 'no'],
-               [1, 0, 1, 0, 'yes'],
+    data_set = [[0, 1, 0, 1, 'yes'],
                [1, 1, 1, 1, 'yes'],
-               [0, 0, 1, 1, 'no'],
+               [0, 0, 1, 0, 'no'],
+               [1, 0, 1, 1, 'no'],
+               [1, 1, 0, 1, 'yes'],
+               [0, 0, 1, 0, 'yes'],
+               [0, 1, 1, 0, 'yes'],
+               [1, 0, 0, 1, 'no'],
                 ]
     labels = ['is_beautiful', 'is_educated', 'is_funny', 'is_rich']
     # change to discrete values
@@ -72,10 +72,10 @@ def split_data_set(data_set, index, value):
     for instance in data_set:
         if instance[index] == value:
             target_instance = instance[:index]
-            instance.extend(instance[index + 1:])
+            target_instance.extend(instance[index + 1:])
             # [index+1:]表示从跳过 index 的 index+1行，取接下来的数据
             # 收集结果值 index列为value的行【该行需要排除index列】
-            ret_data_set.append(instance)
+            ret_data_set.append(target_instance)
     return ret_data_set
 
 
@@ -162,8 +162,9 @@ def make_tree(data_set, labels):
     for value in unique_vals:
         # 求出剩余的标签label
         sub_labels = labels[:]
-        # 遍历当前选择特征包含的所有属性值，在每个数据集划分上递归调用函数createTree()
-        my_tree[best_feature_label][value] = make_tree(split_data_set(data_set, best_feature, value), sub_labels)
+        # 遍历当前选择特征包含的所有属性值，在每个数据集划分上递归调用函数make_tree()
+        sub_data_set = split_data_set(data_set, best_feature, value)
+        my_tree[best_feature_label][value] = make_tree(sub_data_set, sub_labels)
 
     return my_tree
 
@@ -178,7 +179,7 @@ def classify(input_tree, featrue_labels, test_value):
         class_label 分类的结果值，需要映射label才能知道名称
     """
     # 获取tree的根节点对于的key值
-    first_str = input_tree.keys()[0]
+    first_str = list(input_tree.keys())[0]
     # 通过key得到根节点对应的value
     second_dict = input_tree[first_str]
     # 判断根节点名称获取根节点在label中的先后顺序，这样就知道输入的testVec怎么开始对照树来做分类
@@ -190,7 +191,7 @@ def classify(input_tree, featrue_labels, test_value):
     if isinstance(featrue_index, dict):
         class_label = classify(value_of_feature, featrue_labels, test_value)
     else:
-        class_label = value_of_feature
+        class_label = featrue_labels
     return class_label
 
 
@@ -216,7 +217,7 @@ arrow_args = dict(arrowstyle="<-")
 
 def getNumLeafs(myTree):
     numLeafs = 0
-    firstStr = myTree.keys()[0]
+    firstStr = list(myTree.keys())[0]
     secondDict = myTree[firstStr]
     # 根节点开始遍历
     for key in secondDict.keys():
@@ -230,7 +231,7 @@ def getNumLeafs(myTree):
 
 def getTreeDepth(myTree):
     maxDepth = 0
-    firstStr = myTree.keys()[0]
+    firstStr = list(myTree.keys())[0]
     secondDict = myTree[firstStr]
     # 根节点开始遍历
     for key in secondDict.keys():
@@ -269,7 +270,7 @@ def plotTree(myTree, parentPt, nodeTxt):
     # 并打印输入对应的文字
     plotMidText(cntrPt, parentPt, nodeTxt)
 
-    firstStr = myTree.keys()[0]
+    firstStr = list(myTree.keys())[0]
     # 可视化Node分支点；第一次调用plotTree时，cntrPt与parentPt相同
     plotNode(firstStr, cntrPt, parentPt, decisionNode)
     # 根节点的值
@@ -293,7 +294,7 @@ def plotTree(myTree, parentPt, nodeTxt):
 
 def createPlot(inTree):
     # 创建一个figure的模版
-    fig = plt.figure(1, facecolor='green')
+    fig = plt.figure(1, facecolor='white')
     fig.clf()
 
     axprops = dict(xticks=[], yticks=[])
@@ -322,7 +323,7 @@ def test():
     import copy
     my_tree = make_tree(data, copy.deepcopy(labels))
     print(my_tree)
-    # [1, 1]表示要取的分支上的节点位置，对应的结果值
+    # [1, 1, 1]表示要取的分支上的节点位置，对应的结果值
     print(classify(my_tree, labels, [1, 1, 1]))
 
     # 获得树的高度
@@ -330,29 +331,6 @@ def test():
 
     # 画图可视化展现
     createPlot(my_tree)
-
-
-def ContactLensesTest():
-    """
-    Desc:
-        预测隐形眼镜的测试代码
-    Args:
-        none
-    Returns:
-        none
-    """
-
-    # 加载隐形眼镜相关的 文本文件 数据
-    fr = open('data/3.DecisionTree/lenses.txt')
-    # 解析数据，获得 features 数据
-    lenses = [inst.strip().split('\t') for inst in fr.readlines()]
-    # 得到数据的对应的 Labels
-    lensesLabels = ['age', 'prescript', 'astigmatic', 'tearRate']
-    # 使用上面的创建决策树的代码，构造预测隐形眼镜的决策树
-    lensesTree = make_tree(lenses, lensesLabels)
-    print(lensesTree)
-    # 画图可视化展现
-    createPlot(lensesTree)
 
 
 def get_tree_height(tree):
@@ -368,7 +346,7 @@ def get_tree_height(tree):
     if not isinstance(tree, dict):
         return 1
 
-    child_trees = tree.values()[0].values()
+    child_trees = list(tree.values())[0].values()
 
     # 遍历子树, 获得子树的最大高度
     max_height = 0
@@ -383,4 +361,3 @@ def get_tree_height(tree):
 
 if __name__ == "__main__":
     test()
-    # ContactLensesTest()
