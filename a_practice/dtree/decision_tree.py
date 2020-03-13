@@ -80,7 +80,7 @@ def split_data_set(data_set, index, value):
 
 
 def select_best_feature(data_set):
-    """select_best_feature(选择最好的特征)
+    """select_best_feature(选择最高增益的特征)
     Args:
         data_set 数据集
     Returns:
@@ -111,7 +111,7 @@ def select_best_feature(data_set):
         # 信息增益是熵的减少或者是数据无序度的减少。最后，比较所有特征中的信息增益，返回最好特征划分的索引值。
         info_gain = base_entropy - new_entropy
         print('infoGain=', info_gain, 'bestFeature=', i, base_entropy, new_entropy)
-        if info_gain > best_gain:
+        if info_gain >= best_gain:
             best_gain = info_gain
             best_feature = i
     return best_feature
@@ -130,7 +130,7 @@ def majority_cnt(class_list):
             class_cnt[vote] = 0
         class_cnt[vote] += 1
     # 倒叙排列class_cnt得到一个字典集合，然后取出第一个就是结果（yes/no），即出现次数最多的结果
-    sorted_class_cnt = sorted(class_cnt.iteritems(), key=operator.itemgetter(1), reverse=True)
+    sorted_class_cnt = sorted(class_cnt, key=operator.itemgetter(1), reverse=True)
     # print 'sortedClassCount:', sortedClassCount
     return sorted_class_cnt[0][0]
 
@@ -323,8 +323,8 @@ def test():
     import copy
     my_tree = make_tree(data, copy.deepcopy(labels))
     print(my_tree)
-    # [1, 1, 1]表示要取的分支上的节点位置，对应的结果值
-    print(classify(my_tree, labels, [1, 1, 1]))
+    # [0, 1, 0, 0]为待测样本，代表（长相一般、高学历、无趣味、没钱）
+    print(classify(my_tree, labels, [0, 1, 0, 0]))
 
     # 获得树的高度
     print(get_tree_height(my_tree))
